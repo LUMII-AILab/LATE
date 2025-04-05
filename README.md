@@ -1,2 +1,1 @@
-# LATE
-Open Source Toolkit for Speech Transcription
+# LATE: Open Source Toolkit for Speech Transcription
