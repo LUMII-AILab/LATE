@@ -16,8 +16,10 @@ First, download the latest binary release (`late-<date>-darwin-universal.tgz`) f
 
 In a [Terminal application](https://en.wikipedia.org/wiki/Command-line_interface), change to the directory where you unpacked LATE. Then download the ASR and VAD models by executing the following command line:
 ```
-bash download_models.sh
+bash download_models.sh <lang>
 ```
+Replace `<lang>` with `lv` or `ltg` to download the fine-tuned Latvian or Latgalian model (Q8-quantized), respectively. If the `<lang>` parameter is omitted, the original Whisper large-v3 model (Q5-quantized) will be downloaded.
+
 Note that downloading the ASR model may take some time.
 
 Finally, run the LATE front-end and back-end by executing:
