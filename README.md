@@ -1,4 +1,4 @@
-# LATE: Open Source Toolkit for Private Speech Transcription
+# LATE: Toolkit for Private Speech Transcription
 
 The LATE toolkit consists of three components:
 
@@ -10,19 +10,21 @@ The LATE toolkit consists of three components:
 
 Currently, a precompiled LATE binary is available for macOS on Apple Silicon (M1, M2, M3, or M4).
 
-A binary release for Linux/x86_64 computers is in progress.
+A binary release for Linux/x86_64 systems is in progress.
 
 First, download the latest binary release from the [releases page](https://github.com/LUMII-AILab/LATE/releases), then unzip it (e.g. `late-darwin-universal.zip`).
 
-In a [Terminal application](https://en.wikipedia.org/wiki/Command-line_interface), change directory to where you unzipped LATE. Then download the ASR and VAD models by executing this command line:
+In a [Terminal application](https://en.wikipedia.org/wiki/Command-line_interface), change to the directory where you unzipped LATE. Then download the ASR and VAD models by executing the following command line:
 ```
-./download_models.sh
+bash ./download_models.sh
 ```
+Note that downloading the ASR model may take some time.
 
-Finally, run the LATE front-end and back-end by executing this command line:
+Finally, run the LATE front-end and back-end by executing:
 ```
-./late
+bash ./run_late.sh
 ```
+The front-end will open in your default web browser. Please, wait a few seconds while the back-end loads and the front-end automatically reloads.
 
 ## Acknowledgements
 
