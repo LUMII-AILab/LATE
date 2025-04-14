@@ -12,17 +12,17 @@ Currently, a precompiled LATE binary is available for macOS on Apple Silicon (M1
 
 A binary release for Linux/x86_64 systems is in progress.
 
-First, download the latest binary release from the [releases page](https://github.com/LUMII-AILab/LATE/releases), then unzip it (e.g. `late-darwin-universal.zip`).
+First, download the latest binary release (`late-<date>-darwin-universal.tgz`) from the [releases page](https://github.com/LUMII-AILab/LATE/releases), then unpack it.
 
-In a [Terminal application](https://en.wikipedia.org/wiki/Command-line_interface), change to the directory where you unzipped LATE. Then download the ASR and VAD models by executing the following command line:
+In a [Terminal application](https://en.wikipedia.org/wiki/Command-line_interface), change to the directory where you unpacked LATE. Then download the ASR and VAD models by executing the following command line:
 ```
-bash ./download_models.sh
+bash download_models.sh
 ```
 Note that downloading the ASR model may take some time.
 
 Finally, run the LATE front-end and back-end by executing:
 ```
-bash ./run_late.sh
+bash run_late.sh
 ```
 The front-end will open in your default web browser. Please, wait a few seconds while the back-end loads and the front-end automatically reloads.
 
