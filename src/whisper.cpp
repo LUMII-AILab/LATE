@@ -12,6 +12,7 @@
 #include <shared_mutex>
 #include <atomic>
 #include <filesystem>
+#include <functional>
 
 #include <whisper.h>
 #include <nlohmann/json.hpp>
@@ -185,7 +186,7 @@ struct whisper_state_deleter {
 
 class WhisperImpl {
     inline static logger log = new_logger("whisper");
-    WhisperModelImpl& model;
+    std::reference_wrapper<WhisperModelImpl> model;
     VADModel vad_model;
     // struct whisper_state *state = nullptr;
     std::shared_ptr<struct whisper_state> state;
@@ -197,6 +198,8 @@ public:
     WhisperImpl(WhisperModelImpl& model) : model(model) {}
     WhisperImpl(WhisperModelImpl& model, VADModel& vad_model) : model(model), vad_model(vad_model) {}
     ~WhisperImpl() { free(); }
+
+    void setModel(WhisperModelImpl& model) { free(); this->model = model; }
 
     void free() {
         // if (state != nullptr)
@@ -235,7 +238,7 @@ public:
 
         log.debug("whisper lang: {}", lang);
 
-        struct whisper_context * ctx = model.get_context();
+        struct whisper_context * ctx = model.get().get_context();
         struct whisper_state *state = this->state.get();
 
         if (ctx == nullptr)
@@ -396,7 +399,7 @@ public:
         // };
 
         token_timestamps = params.token_timestamps;
-        dtw_enabled = model.dtw_enabled;
+        dtw_enabled = model.get().dtw_enabled;
 
         do_abort = false;
 
@@ -511,15 +514,15 @@ public:
     }
 
     void getToken(WhisperToken& token, int i_segment, int i_token) {
-        struct whisper_context *ctx = model.get_context();
+        struct whisper_context *ctx = model.get().get_context();
         struct whisper_state *state = this->state.get();
         *(whisper_token_data*)(&token) = whisper_full_get_token_data_from_state(state, i_segment, i_token);
         token.text = whisper_full_get_token_text_from_state(ctx, state, i_segment, i_token);
-        token.special = token.id >= model.eot;
+        token.special = token.id >= model.get().eot;
     }
 
     void getSegment(WhisperSegment& segment, int i_segment) {
-        struct whisper_context *ctx = model.get_context();
+        struct whisper_context *ctx = model.get().get_context();
         struct whisper_state *state = this->state.get();
         segment.t0 = whisper_full_get_segment_t0_from_state(state, i_segment);
         segment.t1 = whisper_full_get_segment_t1_from_state(state, i_segment);
@@ -606,7 +609,7 @@ public:
 
     /* deprecated */
     json segments_to_json() {
-        struct whisper_context *ctx = model.get_context();
+        struct whisper_context *ctx = model.get().get_context();
         struct whisper_state *state = this->state.get();
         std::string lang = whisper_lang_str(whisper_full_lang_id_from_state(state));
         int n_segments = whisper_full_n_segments_from_state(state);
@@ -862,7 +865,10 @@ Whisper::Whisper(WhisperModel& model, VADModel& vad_model) : impl(std::make_uniq
 Whisper::~Whisper() {}
 
 void Whisper::setModel(WhisperModel& model) {
-    impl = std::make_unique<WhisperImpl>(*model.impl.get());
+    if (!impl)
+        impl = std::make_unique<WhisperImpl>(*model.impl.get());
+    else
+        impl->setModel(*model.impl.get());
 }
 
 void Whisper::setVADModel(VADModel& model) {
