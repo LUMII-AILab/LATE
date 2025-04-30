@@ -160,7 +160,7 @@ public:
 class WhisperModel {
 public:
     WhisperModel();
-    WhisperModel(const std::string& model, const std::string& dtw = "", bool use_gpu = true, int gpu_device = 0);
+    WhisperModel(const std::string& model, const std::string& dtw = "", bool use_gpu = true, int gpu_device = 0, bool lazy_load = true);
 
     WhisperModel(const WhisperModel&) = delete;
     WhisperModel& operator=(const WhisperModel&) = delete;
@@ -172,7 +172,7 @@ public:
 
     operator bool() const;
 
-    bool init(const std::string& model, const std::string& dtw = "", bool use_gpu = true, int gpu_device = 0);
+    bool init(const std::string& model, const std::string& dtw = "", bool use_gpu = true, int gpu_device = 0, bool lazy_load = true);
 
 private:
     friend class Whisper;

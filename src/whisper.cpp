@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <shared_mutex>
 #include <atomic>
+#include <filesystem>
 
 #include <whisper.h>
 #include <nlohmann/json.hpp>
@@ -53,14 +54,44 @@ class WhisperImpl;
 class WhisperModelImpl {
 public:
     WhisperModelImpl() {}
-    WhisperModelImpl(const std::string& model, const std::string& dtw = "", bool use_gpu = true, int gpu_device = 0) { init(model, dtw, use_gpu, gpu_device); }
+    WhisperModelImpl(const std::string& model, const std::string& dtw = "", bool use_gpu = true, int gpu_device = 0, bool lazy_load = true) {
+        init(model, dtw, use_gpu, gpu_device, lazy_load);
+    }
     ~WhisperModelImpl() { free(); }
 
     operator bool() const { return ctx != nullptr; }
 
-    bool init(const std::string& model, const std::string& dtw = "", bool use_gpu = true, int gpu_device = 0) {
+    bool init(const std::string& model, const std::string& dtw = "", bool use_gpu = true, int gpu_device = 0, bool lazy_load = true) {
         if (model.empty())
             return false;
+        if (!std::filesystem::exists(model) || !std::filesystem::is_regular_file(std::filesystem::canonical(model)))
+            return false;
+        _model = model;
+        _dtw = dtw;
+        _use_gpu = use_gpu;
+        _gpu_device = gpu_device;
+        if (!lazy_load)
+            return _init();
+        return true;
+    }
+
+private:
+    std::string _model;
+    std::string _dtw = "";
+    bool _use_gpu = true;
+    int _gpu_device = 0;
+
+    bool _init() {
+        auto& model = _model;
+        auto& dtw = _dtw;
+        auto& use_gpu = _use_gpu;
+        auto& gpu_device = _gpu_device;
+
+        if (model.empty())
+            return false;
+        if (!std::filesystem::exists(model) || !std::filesystem::is_regular_file(std::filesystem::canonical(model)))
+            return false;
+
         struct whisper_context_params cparams = whisper_context_default_params();
         cparams.use_gpu = use_gpu;
         cparams.flash_attn = true;
@@ -111,6 +142,8 @@ public:
         return ctx != nullptr;
     }
 
+public:
+
     void free() {
         if (ctx != nullptr)
             whisper_free(ctx);
@@ -124,6 +157,8 @@ private:
     struct whisper_context *ctx = nullptr;
     bool dtw_enabled = false;
     whisper_token eot;
+
+    struct whisper_context* get_context() { if (!ctx) _init(); return ctx; }
 };
 
 struct whisper_state_deleter {
@@ -187,8 +222,11 @@ public:
 
         log.debug("whisper lang: {}", lang);
 
-        struct whisper_context * ctx = model.ctx;
+        struct whisper_context * ctx = model.get_context();
         struct whisper_state *state = this->state.get();
+
+        if (ctx == nullptr)
+            return WhisperReturnValue(-1);
 
         // if (config.reset)
         //     free();
@@ -460,7 +498,7 @@ public:
     }
 
     void getToken(WhisperToken& token, int i_segment, int i_token) {
-        struct whisper_context *ctx = model.ctx;
+        struct whisper_context *ctx = model.get_context();
         struct whisper_state *state = this->state.get();
         *(whisper_token_data*)(&token) = whisper_full_get_token_data_from_state(state, i_segment, i_token);
         token.text = whisper_full_get_token_text_from_state(ctx, state, i_segment, i_token);
@@ -468,7 +506,7 @@ public:
     }
 
     void getSegment(WhisperSegment& segment, int i_segment) {
-        struct whisper_context *ctx = model.ctx;
+        struct whisper_context *ctx = model.get_context();
         struct whisper_state *state = this->state.get();
         segment.t0 = whisper_full_get_segment_t0_from_state(state, i_segment);
         segment.t1 = whisper_full_get_segment_t1_from_state(state, i_segment);
@@ -555,7 +593,7 @@ public:
 
     /* deprecated */
     json segments_to_json() {
-        struct whisper_context *ctx = model.ctx;
+        struct whisper_context *ctx = model.get_context();
         struct whisper_state *state = this->state.get();
         std::string lang = whisper_lang_str(whisper_full_lang_id_from_state(state));
         int n_segments = whisper_full_n_segments_from_state(state);
@@ -781,8 +819,8 @@ private:
 
 WhisperModel::WhisperModel() {}
 
-WhisperModel::WhisperModel(const std::string& model, const std::string& dtw, bool use_gpu, int gpu_device)
-    : impl(std::make_unique<WhisperModelImpl>(model, dtw, use_gpu, gpu_device)) {
+WhisperModel::WhisperModel(const std::string& model, const std::string& dtw, bool use_gpu, int gpu_device, bool lazy_load)
+    : impl(std::make_unique<WhisperModelImpl>(model, dtw, use_gpu, gpu_device, lazy_load)) {
 }
 
 WhisperModel::~WhisperModel() {}
@@ -791,9 +829,9 @@ WhisperModel::operator bool() const {
     return impl->operator bool();
 }
 
-bool WhisperModel::init(const std::string& model, const std::string& dtw, bool use_gpu, int gpu_device) {
+bool WhisperModel::init(const std::string& model, const std::string& dtw, bool use_gpu, int gpu_device, bool lazy_load) {
     impl = std::make_unique<WhisperModelImpl>();
-    return impl->init(model, dtw, use_gpu, gpu_device);
+    return impl->init(model, dtw, use_gpu, gpu_device, lazy_load);
 }
 
 
