@@ -1051,6 +1051,8 @@ public:
             if (job_id != nullptr && *job_id == id) {
                 log.trace("setting abort flag for running process");
                 data.do_abort = true;
+                if (data.whisper)
+                    data.whisper->abort();
                 return true;
             }
         }
@@ -1168,6 +1170,11 @@ private:
             if (job.do_abort || job.status == WhisperJobStatus::Aborted) {
                 std::unique_lock<std::shared_mutex> lock(job_status_mutex);
                 job.status = WhisperJobStatus::Aborted;
+                continue;
+            }
+
+            if (data.do_abort) {
+                data.do_abort = false;
                 continue;
             }
 
