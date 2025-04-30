@@ -271,6 +271,7 @@ public:
     std::optional<WhisperJobStatus> wait(WhisperJobID id, const std::function<bool(const WhisperSegments&, size_t)>& callback);
     optional_ref<const WhisperSegments> getResults(WhisperJobID id);
     bool abort(WhisperJobID id);
+    void terminate();
 
 private:
     std::unique_ptr<WhisperQueueProcessorImpl> impl;

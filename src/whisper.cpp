@@ -957,8 +957,14 @@ struct WhisperProcessingThreadData {
     std::shared_mutex job_mutex;
     std::condition_variable_any cv;
     bool do_abort = false;
+    bool exit_thread = false;
     WhisperImpl* whisper = nullptr;
     WhisperJobID* job_id = nullptr;
+
+    WhisperProcessingThreadData() {}
+
+    WhisperProcessingThreadData(const WhisperProcessingThreadData&) = delete;
+    WhisperProcessingThreadData& operator=(const WhisperProcessingThreadData&) = delete;
 };
 
 class WhisperQueueProcessorImpl {
@@ -968,6 +974,29 @@ class WhisperQueueProcessorImpl {
 public:
     WhisperQueueProcessorImpl(WhisperModelImpl& model, int max_instances = 2) : model(model), max_instances(max_instances) {}
     WhisperQueueProcessorImpl(WhisperModelImpl& model, VADModel& vad_model, int max_instances = 2) : model(model), vad_model(vad_model), max_instances(max_instances) {}
+    ~WhisperQueueProcessorImpl() { terminate(); }
+
+    void terminate() {
+        log.info("terminating");
+        for (auto& [id, data] : threads) {
+            data.do_abort = true;
+            data.exit_thread = true;
+            if (data.whisper)
+                data.whisper->abort();
+        }
+        for (auto& [id, data] : threads) {
+            if (data.thread.joinable())
+                data.thread.join();
+        }
+
+        // cleanup();
+        for (auto it = threads.begin(); it != threads.end(); ) {
+            auto& data = it->second;
+            if (data.thread.joinable())
+                data.thread.join();
+            it = threads.erase(it); // erase returns the next iterator
+        }
+    }
 
     void setVADModel(VADModel& model) { vad_model = model; }
 
@@ -1183,6 +1212,9 @@ private:
             return true;
         };
         while (auto nextJob = getNextJob()) {
+            if (data.exit_thread)
+                return;
+
             WhisperJobInternal& job = nextJob.value();
             currentJob = &job;
 
@@ -1246,6 +1278,9 @@ private:
             // job.mutex = nullptr;
             // TODO: with what mutex to lock
             data.job_id = nullptr;
+
+            if (data.exit_thread)
+                return;
         }
         active_threads--;
         // remove itself from the threads list
@@ -1320,3 +1355,5 @@ optional_ref<const WhisperSegments> WhisperQueueProcessor::getResults(WhisperJob
 bool WhisperQueueProcessor::abort(WhisperJobID id) {
     return impl->abort(id);
 }
+
+void WhisperQueueProcessor::terminate() { impl->terminate(); }
