@@ -957,6 +957,36 @@
       }
   </style>
   <style>
+    .drop-zone {
+    }
+    .drop-zone.highlight {
+      /* border: 1px dashed black; */
+      /* border-radius: 30px; */
+    }
+    .drop-zone.highlight {
+      position: relative;
+    }
+    .drop-zone.highlight::after {
+      border-radius: 10px;
+      content: "Drop here...";
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      bottom: 0px;
+      right: 0px;
+      /* inset: 0; */
+      z-index: 10000;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px dashed lightgray;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #333;
+      pointer-events: none;
+    }
+  </style>
+  <style>
     /* drop down menu */
     /*
     * {
@@ -1162,7 +1192,7 @@
         background-color: #e5f5ff;
       }
     </style>
-    <div id="root" class="noselect">
+    <div id="root" class="drop-zone noselect">
 
       <div class="overlay" id="overlay"></div>
 

@@ -436,7 +436,6 @@ async function main() {
   }
 
   onchange(dom.fileSelector, async (event) => {
-    const newDocument = startNewDocument;
     const file = event.target.files[0];
     // reset file selector: https://stackoverflow.com/a/35323290
     event.target.value = ''
@@ -447,6 +446,13 @@ async function main() {
     if(!file) {
       return;
     }
+
+    loadFile(file);
+  });
+
+  async function loadFile(file, newDocument) {
+    if (newDocument === undefined)
+    newDocument = startNewDocument;
 
     if (newDocument) {
       documentID = '';
@@ -558,7 +564,7 @@ async function main() {
 
     // stop spinner
     setState();
-  });
+  }
 
   // https://stackoverflow.com/questions/31061838/how-do-i-cancel-an-http-fetch-request
   let abortController;
@@ -1450,6 +1456,39 @@ async function main() {
 
   dom.dynamicColors.checked = useDynamicColors;
   on(dom.dynamicColors, 'change', (e) => { setUseDynamicColors(dom.dynamicColors.checked); recreateEditor(); });
+
+  // drag & drop
+  function addDragAndDrop(dropZone) {
+    console.log(dropZone)
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+    function highlight() {
+      dropZone.classList.add('highlight');
+    }
+    function unhighlight() {
+      dropZone.classList.remove('highlight');
+    }
+    dropZone.addEventListener('drop', handleDrop, false);
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files[0];
+      loadFile(files, true);
+    }
+  }
+
+  addDragAndDrop(document.querySelector('.drop-zone'));
 }
 
 
