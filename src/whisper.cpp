@@ -82,6 +82,8 @@ private:
     int _gpu_device = 0;
 
     bool _init() {
+        std::unique_lock write_lock(mutex);
+
         auto& model = _model;
         auto& dtw = _dtw;
         auto& use_gpu = _use_gpu;
@@ -145,6 +147,7 @@ private:
 public:
 
     void free() {
+        std::unique_lock write_lock(mutex);
         if (ctx != nullptr)
             whisper_free(ctx);
         ctx = nullptr;
@@ -158,7 +161,17 @@ private:
     bool dtw_enabled = false;
     whisper_token eot;
 
-    struct whisper_context* get_context() { if (!ctx) _init(); return ctx; }
+    std::shared_mutex mutex;
+
+    struct whisper_context* get_context() {
+        std::shared_lock read_lock(mutex);
+        if (!ctx) {
+            read_lock.unlock();
+            _init();
+            read_lock.lock();
+        }
+        return ctx;
+    }
 };
 
 struct whisper_state_deleter {
