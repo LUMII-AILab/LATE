@@ -7,19 +7,19 @@ export function select(selectorOrElement) {
 }
 
 export function enable(el) {
-  select(el).classList.remove('disabled');
+  select(el)?.classList?.remove('disabled');
 }
 
 export function disable(el) {
-  select(el).classList.add('disabled');
+  select(el)?.classList?.add('disabled');
 }
 
 export function hide(el) {
-  select(el).classList.add('hidden');
+  select(el)?.classList?.add('hidden');
 }
 
 export function unhide(el) {
-  select(el).classList.remove('hidden');
+  select(el)?.classList?.remove('hidden');
 }
 
 export function on(el, event, listener) {
@@ -39,13 +39,13 @@ export function onchange(el, listener) {
 }
 
 export function addclass(el, ...classes) {
-  return select(el).classList.add(...classes);
+  return select(el)?.classList?.add(...classes);
 }
 
 export function rmclass(el, ...classes) {
-  return select(el).classList.remove(...classes);
+  return select(el)?.classList?.remove(...classes);
 }
 
 export function hasclass(el, cls) {
-  return select(el).classList.contains(cls);
+  return select(el)?.classList?.contains(cls);
 }
