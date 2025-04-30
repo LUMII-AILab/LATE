@@ -1,9 +1,9 @@
 
-import { editorSchema } from './schema.js';
+import { editorSchema, useDynamicColors, setUseDynamicColors } from './schema.js';
 
 import { msToTime, copyTextToClipboard, saveAs, toSRTtime, extractAudio, AudioRecorder, AudioRecorderVAD, generateRandomId, concatenateAudioBlobs, concatenateAudioBuffers, decodeAudioData, buffer2wav } from './utils.js';
 
-import { setupEditor } from './editor.js';
+import { setupEditor, recreate as recreateEditor } from './editor.js';
 
 import { setupWaveform } from './waveform.js';
 
@@ -231,6 +231,7 @@ async function main() {
     abortButton: select('#abort'),
     copyLink: select('#copy-link'),
     removeDocument: select('#remove-document'),
+    dynamicColors: select('#dynamic-colors'),
   };
 
   const waveform = await setupWaveform({ container: '#waveform' });
@@ -1445,6 +1446,10 @@ async function main() {
       console.log('Current State ID:', currentStateID);
   };
   window.setTime = (t) => { editor.setTime(t); };
+
+
+  dom.dynamicColors.checked = useDynamicColors;
+  on(dom.dynamicColors, 'change', (e) => { setUseDynamicColors(dom.dynamicColors.checked); recreateEditor(); });
 }
 
 

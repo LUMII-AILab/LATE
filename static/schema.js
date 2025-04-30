@@ -1,5 +1,11 @@
 import { Schema } from 'prosemirror-model';
 
+export let useDynamicColors = false;
+
+export function setUseDynamicColors(value) {
+  console.log(value)
+  useDynamicColors = value;
+}
 
 export const editorSchema = new Schema({
   nodes: {
@@ -45,7 +51,7 @@ export const editorSchema = new Schema({
           "data-end": node.attrs.end,
           "data-p": node.attrs.p,
           "style": `--value: ${p};`,
-          "class": 'dynamic-color ' + (node.attrs.highlighted ? "highlight" : '')
+          "class": (useDynamicColors ? 'dynamic-color ' : ' ') + (node.attrs.highlighted ? "highlight" : '')
         }, 0];
       },
       parseDOM: [{

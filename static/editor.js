@@ -581,3 +581,25 @@ export async function setupEditor(settings) {
     },
   };
 }
+
+function recreateEditor(view) {
+  const parent = view.dom.parentNode;
+  const state = view.state;
+  const selection = state.selection;
+  const scrollTop = parent.scrollTop;
+
+  view.destroy();
+
+  const newState = EditorState.create({
+    schema: state.schema,
+    doc: state.doc,
+    selection,
+    plugins: state.plugins,
+  });
+
+  return new EditorView(parent, { state: newState });
+}
+
+export function recreate() {
+  editorView = recreateEditor(editorView);
+}
